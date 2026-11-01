@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="theme-color" content="#08111b">
+<title>TV Dashboard - Greek-only Test</title>
+<style>
+:root{color-scheme:dark;--bg:#08111b;--panel:#102235;--head:#132b3e;--edge:#29495d;--ink:#f1f8ff;--mint:#53dab0}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+body{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+header{min-height:50px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 13px;border-bottom:1px solid #22394b;flex-shrink:0}
+h1{margin:0;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;line-height:1}
+.brand-tv{font-size:clamp(27px,3.2vw,38px);font-weight:900;letter-spacing:-.065em}
+.brand-dash{font-size:clamp(13px,1.55vw,18px);font-weight:680;letter-spacing:-.015em;transform:translateY(1px)}
+.live{display:flex;align-items:center;gap:8px;color:#ff5668;letter-spacing:.13em;font-size:12px;font-weight:900}
+.live-dot{width:11px;height:11px;border-radius:50%;background:#ff394c;box-shadow:0 0 0 1px #ff394c70,0 0 10px #ff394c8c;animation:pulse 1.4s ease-in-out infinite}
+.live:not(.active){opacity:.48}.live:not(.active) .live-dot{animation:none;box-shadow:none;background:#657989}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.72)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.live-dot{animation:none}}
+.grid{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:max-content;gap:8px;padding:9px 11px 16px;align-content:start;-webkit-overflow-scrolling:touch}
+.tile{min-width:0;overflow:hidden;background:var(--panel);border:1px solid var(--edge);border-radius:11px;display:flex;flex-direction:column}
+.tilehead{display:flex;align-items:center;justify-content:space-between;gap:5px;min-height:34px;padding:6px 9px;background:var(--head)}
+.chname{font-weight:850;font-size:clamp(10px,1.15vw,14px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.indicator{width:7px;height:7px;min-width:7px;border-radius:50%;background:#4a6172;opacity:.6}
+.tile.playing .indicator{background:#44dfa4;opacity:1;box-shadow:0 0 8px #44dfa4aa}
+.tile.loading .indicator{background:#f0bc63;opacity:1}
+.tile.failed .indicator{background:#fe7a7a;opacity:1}
+.watch{position:relative;display:block;aspect-ratio:16/9;min-height:88px;width:100%;overflow:hidden;background:#000;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.watch video{display:block;width:100%;height:100%;object-fit:contain;background:#000;pointer-events:none}
+.watch .wait{position:absolute;inset:0;display:none;justify-content:center;align-items:center;pointer-events:none;background:#0005}
+.tile.loading .wait,.tile.idle .wait{display:flex}
+.tile.loading .wait:before{content:"";width:21px;height:21px;border:2px solid #c6d9e255;border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite}
+.tile.idle .wait:before{content:"▶";font-size:22px;color:#8095a3}
+.tile.failed .wait{display:flex;pointer-events:none}
+.tile.failed .wait:before{content:""}
+.retry{display:none;position:absolute;inset:auto auto 9px 50%;transform:translateX(-50%);z-index:4;background:#264f68;border:1px solid #80a7c0;color:#fff;border-radius:8px;font:inherit;font-size:12px;font-weight:850;padding:9px 13px;min-height:38px;white-space:nowrap;cursor:pointer;touch-action:manipulation}
+.tile.failed .retry{display:block}
+.audio-btn,.site-btn{width:100%;min-height:45px;border:0;border-top:1px solid #29495d;border-radius:0 0 9px 9px;display:flex;align-items:center;justify-content:center;gap:9px;background:#1d3548;color:#fff;font:inherit;font-size:clamp(11px,1.05vw,14px);font-weight:850;letter-spacing:.03em;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+.audio-btn{background:#762e39;min-height:49px;touch-action:manipulation}
+.audio-btn:active{background:#a73c4c}.audio-btn.on{background:#13775b;color:#fff}.audio-btn.on:active{background:#189b75}
+.audio-btn .audio-icon{font-size:20px;line-height:1;pointer-events:none}.audio-btn .audio-text{pointer-events:none}
+.site-btn{text-decoration:none;background:#214257;color:#d8ecf4}
+.tile.link-only .watch{cursor:default;background:radial-gradient(circle at 40% 20%,#244960,#101c2b);display:flex;align-items:center;justify-content:center}
+.tile.link-only .webmark{display:flex;flex-direction:column;align-items:center;gap:5px;color:#9fb8ca;pointer-events:none}
+.webmark span{font-size:24px}.webmark small{font-size:10px;font-weight:850;letter-spacing:.06em}
+.tile:focus-within{border-color:#53dab0}
+.audio-btn:focus-visible,.retry:focus-visible,.site-btn:focus-visible,.back:focus-visible,.watch:focus-visible{outline:3px solid var(--mint);outline-offset:-3px}
+.focus{position:fixed;inset:0;z-index:100;background:#000;display:none;flex-direction:column}
+.focus.show{display:flex}
+.focushead{position:absolute;z-index:5;top:0;left:0;right:0;padding:9px 12px;background:linear-gradient(#000e,#0000);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.focushead strong{font-size:clamp(16px,2.1vw,23px);text-shadow:0 1px 4px #000}
+.back{min-height:42px;min-width:91px;padding:7px 11px;border-radius:8px;background:#1c4058;border:1px solid #6c99af;color:#fff;font:inherit;font-size:14px;font-weight:850;touch-action:manipulation;cursor:pointer}
+.focus video{height:100%;width:100%;object-fit:contain;background:#000}
+.focusplay{display:none;position:absolute;bottom:16%;left:50%;transform:translateX(-50%);z-index:6;white-space:nowrap;padding:12px 15px;min-height:44px;color:white;background:#214257;border:1px solid #82b1c7;border-radius:9px;font:inherit;font-weight:850;touch-action:manipulation}
+.focusplay.show{display:block}
+@media(max-width:700px) and (orientation:portrait){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:7px}.chname{font-size:11px}.tilehead{min-height:31px;padding:5px 7px}.audio-btn,.site-btn{min-height:46px}}
+@media(max-height:520px) and (orientation:landscape){header{min-height:43px;padding:5px 10px}.brand-tv{font-size:29px}.brand-dash{font-size:14px}.grid{gap:5px;padding:5px 7px}.tilehead{min-height:26px;padding:3px 6px}.chname{font-size:10px}.watch{min-height:68px}.audio-btn,.site-btn{min-height:43px;font-size:11px}}
+</style>
+</head>
+<body>
+<header><h1 aria-label="TV Dashboard"><span class="brand-tv">TV</span><span class="brand-dash">Dashboard</span></h1><div class="live" id="liveStatus" aria-live="off"><span class="live-dot" aria-hidden="true"></span><span>LIVE</span><span style="font-size:10px;letter-spacing:0;color:#b9d2df">GR TEST</span></div></header>
+<main class="grid" id="grid" aria-label="TV Dashboard: κανάλια"></main>
+<div class="focus" id="focus" aria-hidden="true">
+ <div class="focushead"><button class="back" id="back" type="button">← ΠΙΣΩ</button><strong id="focusName"></strong></div>
+ <video id="focusVideo" playsinline webkit-playsinline controls preload="none"></video>
+ <button class="focusplay" id="focusPlay" type="button">▶ ΑΝΑΠΑΡΑΓΩΓΗ</button>
+</div>
+<script>
+'use strict';
+// Free-TV/IPTV public-stream directory. Streams may be unavailable or geo-blocked.
+// Distinct free services (LiveNOW from FOX, NBC News NOW, CNBC Europe) are NOT FOX News, NBC broadcast or CNBC US.
+const channels=[
+ {id:'skai',name:'ΣΚΑΪ',url:'https://skai-live.siliconweb.com/media/cambria4/index.m3u8',format:'hls'},
+ {id:'action',name:'ACTION 24',url:'https://actionlive.siliconweb.com/actionabr/actiontv/playlist.m3u8',format:'hls'},
+ {id:'naft',name:'ΝΑΥΤΕΜΠΟΡΙΚΗ',url:'https://telmaco.ascdn.broadpeak.io/nafteboriki/default/index.m3u8',format:'hls'},
+ {id:'ert',name:'ERT NEWS',url:'https://ert-ucdn.broadpeak-aas.com/bpk-tv/ERTNews/default/index.mpd',format:'dash'},
+ {id:'alpha',name:'ALPHA',url:'https://alphatvlive2.siliconweb.com/alphatvlive/live_abr/playlist.m3u8',format:'hls'},
+ {id:'star',name:'STAR CHANNEL',url:'https://livestar.siliconweb.com/starvod/star4/star4.m3u8',format:'hls'},
+ {id:'meganews',name:'MEGA NEWS',url:'https://c98db5952cb54b358365984178fb898a.msvdn.net/live/S99841657/NU0xOarAMJ5X/playlist.m3u8',format:'hls'},
+ {id:'open',name:'OPEN',url:'https://liveopen.siliconweb.com/openTvLive/liveopen/playlist.m3u8',format:'hls'},
+ {id:'one',name:'ONE CHANNEL',url:'https://onechannel.siliconweb.com/one/stream/chunks_dvr.m3u8',format:'hls'},
+ {id:'bluesky',name:'BLUE SKY',url:'https://cdn5.smart-tv-data.com/bluesky/bluesky-live/playlist.m3u8',format:'hls',site:'https://blueskytv.gr/live-tv/'},
+ {id:'ant1',name:'ANT1',url:'https://mcdn.antennaplus.gr/live/media0/Ant1/HLS/Ant1.m3u8',format:'hls'},
+ // End of Greek channels: MEGA links to official live page (no confirmed embeddable stream).
+ {id:'mega',name:'MEGA',site:'https://www.megatv.com/live/'},
+ {id:'nbc',name:'NBC NEWS NOW',site:'https://www.nbcnews.com/now'},
+ {id:'foxlivenow',name:'LIVENOW FROM FOX',site:'https://www.livenowfox.com/'},
+ {id:'cnbceurope',name:'CNBC EUROPE',site:'https://www.cnbc.com/live-tv/'},
+ {id:'cnn',name:'CNN',site:'https://www.cnn.com/watch'},
+ {id:'cnbc',name:'CNBC',site:'https://www.cnbc.com/live-tv/'},
+ {id:'foxnews',name:'FOX NEWS',site:'https://www.foxnews.com/livestream'}
+];
+const grid=document.getElementById('grid'),focus=document.getElementById('focus');
+const focusVideo=document.getElementById('focusVideo'),focusName=document.getElementById('focusName');
+const focusPlay=document.getElementById('focusPlay'),liveStatus=document.getElementById('liveStatus');
+const cards=[],streams=[],audios=[],records=[];
+const queue=new Set();
+let connecting=0,audible=-1,focusIndex=-1,focusVersion=0,focusSession=null;
+let hlsPromise=null,dashPromise=null,observer=null;
+const CONNECT_LIMIT=3, MAX_ATTEMPTS=4;
+const defer=fn=>Promise.resolve().then(fn);
+function inject(url){return new Promise((res,rej)=>{const el=document.createElement('script');el.src=url;el.onload=res;el.onerror=()=>rej(new Error('script not loaded'));document.head.append(el)})}
+function getHls(){if(!hlsPromise)hlsPromise=inject('https://cdn.jsdelivr.net/npm/hls.js@1.6.13/dist/hls.min.js').catch(e=>{hlsPromise=null;throw e});return hlsPromise}
+function getDash(){if(!dashPromise)dashPromise=inject('https://cdn.jsdelivr.net/npm/dashjs@4.7.4/dist/dash.all.min.js').catch(e=>{dashPromise=null;throw e});return dashPromise}
+function trackEvent(el,events,fn){for(const event of events)el.addEventListener(event,fn)}
+function stopBubble(e){e.stopPropagation()}
+function state(i,value){const r=records[i];if(!r)return;r.state=value;cards[i].classList.remove('idle','loading','playing','failed');cards[i].classList.add(value);updateLive()}
+function updateLive(){const active=focusIndex!==-1?(!focusVideo.paused&&focusVideo.readyState>=2):records.some((r,i)=>r&&r.state==='playing'&&streams[i]&&!streams[i].paused);liveStatus.classList.toggle('active',active)}
+function makeCard(c,i){
+ const tile=document.createElement('article');tile.className='tile '+(c.url?'idle':'link-only');
+ const head=document.createElement('div');head.className='tilehead';
+ const chname=document.createElement('span');chname.className='chname';chname.textContent=c.name;chname.title=c.name;
+ const indicator=document.createElement('span');indicator.className='indicator';indicator.setAttribute('aria-hidden','true');head.append(chname,indicator);
+ const watch=document.createElement('div');watch.className='watch';
+ if(c.url){
+  const v=document.createElement('video');v.muted=true;v.defaultMuted=true;v.autoplay=true;v.playsInline=true;
+  v.setAttribute('muted','');v.setAttribute('autoplay','');v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.setAttribute('preload','none');v.setAttribute('disablepictureinpicture','');
+  const waiting=document.createElement('div');waiting.className='wait';waiting.setAttribute('aria-hidden','true');
+  const retry=document.createElement('button');retry.type='button';retry.className='retry';retry.textContent='↻ ΞΑΝΑ';retry.setAttribute('aria-label','Επανασύνδεση '+c.name);
+  watch.append(v,waiting,retry);watch.setAttribute('role','button');watch.tabIndex=0;watch.setAttribute('aria-label','Μεγέθυνση '+c.name);
+  watch.addEventListener('click',()=>{if(records[i].state==='failed')manualRetry(i);else openFocus(i)});
+  watch.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(records[i].state==='failed')manualRetry(i);else openFocus(i)}});
+  trackEvent(retry,['pointerdown','touchstart','click'],stopBubble);retry.addEventListener('click',()=>manualRetry(i));
+  const audio=document.createElement('button');audio.className='audio-btn';audio.type='button';audio.setAttribute('aria-pressed','false');audio.setAttribute('aria-label','Άκουσε '+c.name);
+  audio.innerHTML='<span class="audio-icon" aria-hidden="true">🔇</span><span class="audio-text"></span>';
+  trackEvent(audio,['pointerdown','pointerup','touchstart','touchend','click'],stopBubble);
+  audio.addEventListener('click',()=>toggleAudio(i));
+  tile.append(head,watch,audio);streams[i]=v;audios[i]=audio;
+  v.addEventListener('playing',()=>onPlaying(i));
+  v.addEventListener('timeupdate',()=>{const r=records[i];if(r&&r.state==='playing')r.lastProgress=Date.now()});
+  v.addEventListener('error',()=>{const r=records[i];if(r&&r.want&&(r.state==='loading'||r.state==='playing'))failure(i,r.seq)});
+  v.addEventListener('stalled',()=>checkStall(i));v.addEventListener('waiting',()=>checkStall(i));
+  v.addEventListener('pause',()=>{const r=records[i];if(r&&r.state==='playing'){state(i,'loading')}updateLive()});
+  records[i]={state:'idle',seq:0,want:false,attempt:0,session:null,timer:null,retryTimer:null,stallTimer:null,releaseTimer:null,connecting:false,lastProgress:0};
+ }else{
+  const web=document.createElement('div');web.className='webmark';web.innerHTML='<span aria-hidden="true">🌐</span><small>WEB LIVE</small>';watch.append(web);
+  const link=document.createElement('a');link.className='site-btn';link.href=c.site;link.textContent='ΕΠΙΣΗΜΟ LIVE ↗';link.setAttribute('aria-label','Άνοιγμα επίσημης σελίδας '+c.name);
+  tile.append(head,watch,link);streams[i]=null;audios[i]=null;records[i]={state:'link'};
+ }
+ grid.append(tile);cards[i]=tile;return tile;
+}
+channels.forEach(makeCard);
+function clearTimers(r){for(const k of ['timer','retryTimer','stallTimer','releaseTimer']){if(r[k]){clearTimeout(r[k]);r[k]=null}}}
+function cleanup(s){if(!s)return;try{s.dash&&s.dash.reset()}catch(e){}try{s.hls&&s.hls.destroy()}catch(e){}}
+function resetVideo(v){if(!v)return;try{v.pause()}catch(e){}try{v.removeAttribute('src');v.load()}catch(e){}}
+function doneConnecting(i){const r=records[i];if(r&&r.connecting){r.connecting=false;connecting=Math.max(0,connecting-1);defer(pump)}}
+function release(i){const r=records[i];if(!r||!streams[i])return;
+ queue.delete(i);clearTimers(r);++r.seq;doneConnecting(i);cleanup(r.session);r.session=null;resetVideo(streams[i]);r.attempt=0;state(i,'idle');
+}
+function request(i,manual=false){const r=records[i];if(!r||!streams[i]||focusIndex!==-1||document.hidden)return;
+ if(manual){r.want=true;r.attempt=0;release(i)}
+ if(!r.want)r.want=true;
+ if(r.state==='playing'||r.connecting||queue.has(i))return;
+ if(r.retryTimer&&!manual)return;
+ queue.add(i);pump();
+}
+function pump(){if(focusIndex!==-1||document.hidden)return;
+ for(const i of Array.from(queue)){
+  if(connecting>=CONNECT_LIMIT)break;
+  const r=records[i];queue.delete(i);
+  if(!r||!r.want||r.connecting||r.state==='playing')continue;
+  void begin(i);
+ }
+}
+function failure(i,seq){const r=records[i];if(!r||r.seq!==seq||!r.want||focusIndex!==-1)return;
+ ++r.seq;clearTimeout(r.timer);r.timer=null;clearTimeout(r.stallTimer);r.stallTimer=null;
+ doneConnecting(i);cleanup(r.session);r.session=null;resetVideo(streams[i]);
+ if(audible===i){audible=-1;renderAudio()}
+ if(r.attempt<MAX_ATTEMPTS){
+  state(i,'loading');const delay=r.attempt===1?1800:r.attempt===2?5500:9000;
+  r.retryTimer=setTimeout(()=>{r.retryTimer=null;if(r.want&&focusIndex===-1){queue.add(i);pump()}},delay);
+ }else{state(i,'failed')}
+}
+function onPlaying(i){const r=records[i];if(!r||!r.want||focusIndex!==-1)return;
+ clearTimeout(r.timer);r.timer=null;clearTimeout(r.stallTimer);r.stallTimer=null;r.lastProgress=Date.now();
+ r.attempt=0;state(i,'playing');doneConnecting(i);renderAudio();
+}
+function checkStall(i){const r=records[i];if(!r||!r.want||r.state!=='playing'||focusIndex!==-1)return;
+ if(r.stallTimer)clearTimeout(r.stallTimer);
+ const seq=r.seq;
+ r.stallTimer=setTimeout(()=>{r.stallTimer=null;if(r.seq===seq&&r.want&&r.state==='playing'&&!document.hidden&&Date.now()-r.lastProgress>13000)failure(i,seq)},15500);
+}
+async function attach(v,c,isValid,onFatal,alternate=0){
+ const session={hls:null,dash:null};
+ const url=(alternate&&c.alt)?c.alt:c.url;
+ if(c.format==='dash'){
+  await getDash();if(!isValid())return null;
+  const player=window.dashjs.MediaPlayer().create();session.dash=player;
+  player.initialize(v,url,false);player.setMute(v.muted);
+  player.on(window.dashjs.MediaPlayer.events.ERROR,()=>{if(isValid())onFatal()});
+ }else if(v.canPlayType('application/vnd.apple.mpegurl')||v.canPlayType('application/x-mpegURL')){
+  if(!isValid())return null;
+  v.src=url;
+ }else{
+  await getHls();if(!isValid())return null;
+  if(!window.Hls||!window.Hls.isSupported())throw new Error('Unsupported HLS');
+  const hls=new window.Hls({startLevel:0,maxBufferLength:5,backBufferLength:0,capLevelToPlayerSize:true});
+  session.hls=hls;
+  hls.on(window.Hls.Events.ERROR,(_ev,data)=>{if(data&&data.fatal&&isValid())onFatal()});
+  hls.attachMedia(v);hls.loadSource(url);
+ }
+ if(!isValid()){cleanup(session);return null}
+ try{const p=v.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}
+ return session;
+}
+async function begin(i){const r=records[i],v=streams[i],c=channels[i];if(!r||!v||!r.want||focusIndex!==-1)return;
+ if(r.retryTimer){clearTimeout(r.retryTimer);r.retryTimer=null}
+ ++r.seq;const seq=r.seq;r.attempt+=1;r.connecting=true;connecting++;
+ cleanup(r.session);r.session=null;resetVideo(v);
+ v.muted=true;v.defaultMuted=true;audible=audible===i?-1:audible;renderAudio();state(i,'loading');
+ const valid=()=>r.seq===seq&&r.want&&focusIndex===-1&&!document.hidden;
+ r.timer=setTimeout(()=>{if(valid()&&r.state!=='playing')failure(i,seq)},22000);
+ try{
+  const s=await attach(v,c,valid,()=>failure(i,seq),(r.attempt>1&&c.alt)?1:0);
+  if(!valid()){cleanup(s);doneConnecting(i);return}
+  r.session=s;
+ }catch(e){if(valid())failure(i,seq)}
+}
+function manualRetry(i){const r=records[i];if(!r)return;r.want=true;request(i,true)}
+function renderAudio(){audios.forEach((btn,i)=>{if(!btn)return;
+ const on=audible===i&&focusIndex===-1;
+ btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on?'true':'false');btn.setAttribute('aria-label',on?'Ήχος ενεργός, σίγαση '+channels[i].name:'Ήχος κλειστός, ενεργοποίηση '+channels[i].name);
+ btn.querySelector('.audio-icon').textContent=on?'🔊':'🔇';btn.querySelector('.audio-text').textContent=on?'ON':'';
+ const v=streams[i];if(v){v.muted=!on;try{records[i].session&&records[i].session.dash&&records[i].session.dash.setMute(!on)}catch(e){}}
+ })}
+function toggleAudio(i){const r=records[i],v=streams[i];if(focusIndex!==-1||!v||!r)return;
+ if(r.state!=='playing'){manualRetry(i);return}
+ audible=audible===i?-1:i;renderAudio();
+ if(audible===i){try{const p=v.play();if(p&&p.catch)p.catch(()=>{if(audible===i){audible=-1;renderAudio()}})}catch(e){audible=-1;renderAudio()}}
+}
+function watchVisibility(entries){for(const item of entries){const i=+item.target.dataset.idx,r=records[i];if(!r||!streams[i])continue;
+ if(item.isIntersecting){
+  if(r.releaseTimer){clearTimeout(r.releaseTimer);r.releaseTimer=null}
+  r.want=true;
+  if(r.state==='playing'){try{streams[i].play()}catch(e){};continue}
+  request(i);
+ }else{
+  r.want=false;queue.delete(i);
+  if(audible===i){audible=-1;renderAudio()}
+  if(r.releaseTimer)clearTimeout(r.releaseTimer);
+  r.releaseTimer=setTimeout(()=>{r.releaseTimer=null;if(!r.want&&focusIndex===-1)release(i)},4000);
+ }
+}}
+if('IntersectionObserver' in window){
+ observer=new IntersectionObserver(watchVisibility,{root:grid,rootMargin:'120px 0px',threshold:.01});
+ cards.forEach((el,i)=>{if(streams[i]){el.dataset.idx=i;observer.observe(el)}});
+}else{streams.forEach((v,i)=>{if(v){records[i].want=true;request(i)}})}
+function stopAll(){queue.clear();for(let i=0;i<streams.length;i++){if(streams[i]){records[i].want=false;release(i)}}audible=-1;renderAudio()}
+async function openFocus(i){const c=channels[i];if(!c.url)return;
+ focusIndex=i;const token=++focusVersion;stopAll();
+ focus.classList.add('show');focus.setAttribute('aria-hidden','false');focusName.textContent=c.name;
+ focusPlay.classList.remove('show');focusVideo.muted=false;focusVideo.defaultMuted=false;focusVideo.removeAttribute('muted');
+ cleanup(focusSession);focusSession=null;resetVideo(focusVideo);
+ const valid=()=>focusIndex===i&&focusVersion===token;
+ try{
+  const s=await attach(focusVideo,c,valid,()=>{if(valid())focusPlay.classList.add('show')});
+  if(!valid()){cleanup(s);return}
+  focusSession=s;
+  const p=focusVideo.play();if(p&&p.catch)await p.catch(()=>{if(valid())focusPlay.classList.add('show')});
+ }catch(e){if(valid())focusPlay.classList.add('show')}
+ updateLive();
+}
+function closeFocus(){if(focusIndex===-1)return;
+ ++focusVersion;focusIndex=-1;cleanup(focusSession);focusSession=null;resetVideo(focusVideo);
+ focus.classList.remove('show');focus.setAttribute('aria-hidden','true');focusPlay.classList.remove('show');
+ audible=-1;renderAudio();updateLive();
+ // Recreate the observer so visible tiles resume reliably after fullscreen.
+ if(observer){observer.disconnect();cards.forEach((el,i)=>{if(streams[i]){records[i].want=false;observer.observe(el)}})}
+ else{streams.forEach((v,i)=>{if(v){records[i].want=true;request(i)}})}
+}
+document.getElementById('back').addEventListener('click',closeFocus);
+focusPlay.addEventListener('click',()=>{focusVideo.muted=false;const p=focusVideo.play();if(p&&p.catch)p.then(()=>focusPlay.classList.remove('show')).catch(()=>{})});
+focusVideo.addEventListener('playing',()=>{focusPlay.classList.remove('show');updateLive()});
+focusVideo.addEventListener('pause',updateLive);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeFocus()});
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden){if(focusIndex===-1)stopAll();else try{focusVideo.pause()}catch(e){}}
+ else if(focusIndex===-1){if(observer){observer.disconnect();cards.forEach((el,i)=>{if(streams[i])observer.observe(el)})}else{streams.forEach((v,i)=>{if(v){records[i].want=true;request(i)}})}}
+ updateLive();
+});
+window.addEventListener('online',()=>{if(focusIndex!==-1)return;records.forEach((r,i)=>{if(streams[i]&&r.want&&r.state==='failed')manualRetry(i)})});
+window.addEventListener('pagehide',()=>{if(focusIndex===-1)stopAll();else try{focusVideo.pause()}catch(e){}});
+renderAudio();
+</script>
+</body>
+</html>
