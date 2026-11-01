@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
 <meta name="theme-color" content="#08111b">
-<title>TV Dashboard - Greek-only Test</title>
+<title>TV Dashboard - Greek ONLY Test v2</title>
 <style>
 :root{color-scheme:dark;--bg:#08111b;--panel:#102235;--head:#132b3e;--edge:#29495d;--ink:#f1f8ff;--mint:#53dab0}
 *{box-sizing:border-box}
@@ -61,7 +61,7 @@ h1{margin:0;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;li
 </style>
 </head>
 <body>
-<header><h1 aria-label="TV Dashboard"><span class="brand-tv">TV</span><span class="brand-dash">Dashboard</span></h1><div class="live" id="liveStatus" aria-live="off"><span class="live-dot" aria-hidden="true"></span><span>LIVE</span><span style="font-size:10px;letter-spacing:0;color:#b9d2df">GR TEST</span></div></header>
+<header><h1 aria-label="TV Dashboard"><span class="brand-tv">TV</span><span class="brand-dash">Dashboard</span></h1><div class="live" id="liveStatus" aria-live="off"><span class="live-dot" aria-hidden="true"></span><span>LIVE</span><span style="font-size:10px;letter-spacing:0;color:#b9d2df">ΜΟΝΟ ΕΛΛΗΝΙΚΑ · TEST 2</span></div></header>
 <main class="grid" id="grid" aria-label="TV Dashboard: κανάλια"></main>
 <div class="focus" id="focus" aria-hidden="true">
  <div class="focushead"><button class="back" id="back" type="button">← ΠΙΣΩ</button><strong id="focusName"></strong></div>
@@ -70,8 +70,7 @@ h1{margin:0;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;li
 </div>
 <script>
 'use strict';
-// Free-TV/IPTV public-stream directory. Streams may be unavailable or geo-blocked.
-// Distinct free services (LiveNOW from FOX, NBC News NOW, CNBC Europe) are NOT FOX News, NBC broadcast or CNBC US.
+// Greek-only diagnostic test. Streams may be unavailable or geo-blocked.
 const channels=[
  {id:'skai',name:'ΣΚΑΪ',url:'https://skai-live.siliconweb.com/media/cambria4/index.m3u8',format:'hls'},
  {id:'action',name:'ACTION 24',url:'https://actionlive.siliconweb.com/actionabr/actiontv/playlist.m3u8',format:'hls'},
@@ -86,12 +85,6 @@ const channels=[
  {id:'ant1',name:'ANT1',url:'https://mcdn.antennaplus.gr/live/media0/Ant1/HLS/Ant1.m3u8',format:'hls'},
  // End of Greek channels: MEGA links to official live page (no confirmed embeddable stream).
  {id:'mega',name:'MEGA',site:'https://www.megatv.com/live/'},
- {id:'nbc',name:'NBC NEWS NOW',site:'https://www.nbcnews.com/now'},
- {id:'foxlivenow',name:'LIVENOW FROM FOX',site:'https://www.livenowfox.com/'},
- {id:'cnbceurope',name:'CNBC EUROPE',site:'https://www.cnbc.com/live-tv/'},
- {id:'cnn',name:'CNN',site:'https://www.cnn.com/watch'},
- {id:'cnbc',name:'CNBC',site:'https://www.cnbc.com/live-tv/'},
- {id:'foxnews',name:'FOX NEWS',site:'https://www.foxnews.com/livestream'}
 ];
 const grid=document.getElementById('grid'),focus=document.getElementById('focus');
 const focusVideo=document.getElementById('focusVideo'),focusName=document.getElementById('focusName');
